@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const { ObjectId } = require('mongodb');
-const dbClient = require('../utils/db');
+const dbClient = require('../utils/db').default;
 const redisClient = require('../utils/redis');
 
 const postNew = async (req, res) => {
@@ -15,7 +15,7 @@ const postNew = async (req, res) => {
 
   const existingUser = await dbClient.db.collection('users').findOne({ email });
   if (existingUser) {
-    return res.status(400).json({ error: 'Already exists' });
+    return res.status(400).json({ error: 'Already exist' });
   }
 
   const hashedPassword = crypto.createHash('sha1').update(password).digest('hex');
