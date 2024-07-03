@@ -126,8 +126,66 @@ const getIndex = async (req, res) => {
   return res.status(200).json(files);
 };
 
+const putPublish = async (req, res) => {
+  const token = req.headers['x-token'];
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const userId = await redisClient.get(`auth_${token}`);
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const fileId = req.params.id;
+  const fileDocument = await dbClient.db.collection('files').findOne({ _id: new ObjectId(fileId), userId: new ObjectId(userId) });
+
+  if (!fileDocument) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  await dbClient.db.collection('files').updateOne(
+    { _id: new ObjectId(fileId), userId: new ObjectId(userId) },
+    { $set: { isPublic: true } },
+  );
+
+  const updatedFileDocument = await dbClient.db.collection('files').findOne({ _id: new ObjectId(fileId), userId: new ObjectId(userId) });
+
+  return res.status(200).json(updatedFileDocument);
+};
+
+const putUnpublish = async (req, res) => {
+  const token = req.headers['x-token'];
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const userId = await redisClient.get(`auth_${token}`);
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const fileId = req.params.id;
+  const fileDocument = await dbClient.db.collection('files').findOne({ _id: new ObjectId(fileId), userId: new ObjectId(userId) });
+
+  if (!fileDocument) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
+  await dbClient.db.collection('files').updateOne(
+    { _id: new ObjectId(fileId), userId: new ObjectId(userId) },
+    { $set: { isPublic: false } },
+  );
+
+  const updatedFileDocument = await dbClient.db.collection('files').findOne({ _id: new ObjectId(fileId), userId: new ObjectId(userId) });
+
+  return res.status(200).json(updatedFileDocument);
+};
+
 module.exports = {
   postUpload,
   getShow,
   getIndex,
+  putPublish,
+  putUnpublish,
 };
